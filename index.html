@@ -585,12 +585,16 @@ function renderGames(){
 /* ---------- game engine: a list of steps, so Back and Next always work ---------- */
 function startGame(g){
   actx();wake();
-  const base=MODES[mode].games[g];G=Object.assign({},base,{qs:base.mixed?shuffle(base.qs.slice()):base.qs});G.key=mode+g;G.label=`${MODES[mode].label} · ${G.name}`;
+  const base=MODES[mode].games[g];G=Object.assign({},base,{qs:(base.mixed?shuffle(base.qs.slice()):base.qs).map(shuffleOpts)});G.key=mode+g;G.label=`${MODES[mode].label} · ${G.name}`;
   runSecs=secs;marks=G.qs.map(()=>names().map(()=>false));
   steps=[];let r=0;G.qs.forEach((q,i)=>{if(G.mixed){if(!i)steps.push({k:'cat',c:'mixed',r:++r})}else if(!i||G.qs[i-1].c!==q.c)steps.push({k:'cat',c:q.c,r:++r});steps.push({k:'q',i})});
   G.rounds=r;steps.push({k:'pens'});G.qs.forEach((q,i)=>steps.push({k:'r',i}));steps.push({k:'board'});
   si=0;setCtx('game');renderStep();
 }
+// re-deal multiple-choice options every game so the right answer lands on A, B, C or D at random
+// (all-number options like years or counts stay in natural order)
+function shuffleOpts(q){if(q.t!=='mc')return q;if(q.o.every(o=>/^[\d.,\s]+$/.test(o)))return q;
+  const idx=shuffle([...q.o.keys()]);return Object.assign({},q,{o:idx.map(i=>q.o[i]),a:idx.indexOf(q.a)})}
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a}
 function clearTimers(){cancelAnimationFrame(raf);clearTimeout(tmo);setPaused(false)}
 function renderStep(){
